@@ -25,25 +25,22 @@ class Accepter():
     ):
         if edge == "lambda":
             self.lambdacnt += 1
-        if node1 is Set:
+        if isinstance(node1, set):
             node1 = next(iter(node1))
-        if node2 is Set:
+        if isinstance(node2, set):
             if node1 not in self.trans.keys():
                 self.trans[node1] = {edge: node2}
             elif edge not in self.trans[node1].keys():
                 self.trans[node1][edge] = node2
             else:
-                self.trans[node1][edge].union(node2)
+                self.trans[node1][edge] = self.trans[node1][edge].union(node2)
         else:
             if node1 not in self.trans.keys():
                 self.trans[node1] = {edge: set([node2])}
             elif edge not in self.trans[node1].keys():
                 self.trans[node1][edge] = set([node2])
             else:
-                if node2 is Set:
-                    self.trans[node1][edge].union(node2)
-                else:
-                    self.trans[node1][edge].add(node2)
+                self.trans[node1][edge].add(node2)
 
 
     def forward(self, x):

@@ -75,10 +75,10 @@ class regex_to_nfa():
         ret = Accepter(
             set([inter_start]),
             set([inter_final]),
-            M1.charset.Union(M2.charset),
-            M1.trans.update(M2.trans)
+            M1.charset.union(M2.charset),
+            dict(M1.trans, **M2.trans)
         )
-        ret.transadd(inter_start, M1.start.Union(M2.start), "lambda")
+        ret.transadd(inter_start, M1.start.union(M2.start), "lambda")
         ret.transadd(M1.final, inter_final, "lambda")
         ret.transadd(M2.final, inter_final, "lambda")
         self.inter += 1
@@ -90,10 +90,11 @@ class regex_to_nfa():
         ret = Accepter(
             set([inter_start]),
             set([inter_final]),
-            M1.charset.Union(M2.charset),
-            M1.trans.update(M2.trans)
+            M1.charset.union(M2.charset),
+            dict(M1.trans, **M2.trans)
         )
         ret.transadd(inter_start, M1.start, "lambda")
+        ret.transadd(M1.final, M2.start, "lambda")
         ret.transadd(M2.final, inter_final, "lambda")
 
         self.inter += 1
@@ -108,7 +109,7 @@ class regex_to_nfa():
             M.charset,
             M.trans
         )
-  
+
         ret.transadd(inter_start, inter_final, "lambda")
         ret.transadd(inter_final, inter_start, "lambda")
         ret.transadd(inter_start, M.start, "lambda")
@@ -116,7 +117,7 @@ class regex_to_nfa():
         self.inter += 1
         return ret
 
-    def preproc(regex):
+    def preproc(self,regex):
         ret = []
         now = 0
         while (now < len(regex)):
@@ -165,6 +166,12 @@ class regex_to_nfa():
                     cur += 1
                 second = Mlist.pop(-1)
                 Mlist.append(self.mult(Mlist.pop(-1),second))
+            elif self.reglist[cur] == '^':
+                Mlist.append(self.aster(Mlist.pop(-1)))
+                cur += 1
+            else:
+                Mlist.append(self.Minit(self.reglist[cur]))
+                cur += 1
         if Mlist:
             ret = Mlist.pop(0)
             for M in Mlist:
@@ -173,7 +180,9 @@ class regex_to_nfa():
 
                 
     def __call__(self, regex):
+        self.init = 0
+        self.inter = 0
         self.reglist = self.preproc(regex)
-        return eval(0, len(self.reglist))
+        return self.eval(0, len(self.reglist))
     
         
