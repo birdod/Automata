@@ -1,42 +1,5 @@
 from typing import Dict, Set
-import networkx as nx
-import matplotlib.pyplot as plt
-
-#@TODO graph mutiedge collapse, self edge label missing
-class AccepterUtill():
-    def lambda_cnt(trans):
-        cnt = 0
-        for key in trans.keys():
-            for target in trans[key].keys():
-                if target == "lambda":
-                    cnt += 1
-        return cnt
-    
-    def draw_graph(accepter):
-        graph = nx.MultiDiGraph()
-        for state in accepter.trans.keys():
-            graph.add_node(state)
-        edge_labels = {}
-        for keyf in accepter.trans.keys():
-            for edge in accepter.trans[keyf].keys():
-                for keyt in accepter.trans[keyf][edge]:
-                    graph.add_edge(keyf,keyt, label = edge)
-                    if (keyf, keyt) in edge_labels.keys():
-                        edge_labels[(keyf, keyt)] += f',{edge}'
-                    else:
-                        edge_labels[(keyf, keyt)] = edge
-        color_map = []
-        for node in graph:
-            if node in accepter.final:
-                color_map.append('red')
-            else: 
-                color_map.append('blue')     
-        ax = plt.plot()
-        pos = nx.shell_layout(graph)
-        nx.draw_shell(graph, node_color = color_map,with_labels = True)
-        nx.draw_networkx_edge_labels(graph, pos=pos, edge_labels=edge_labels)
-        plt.show()
-        return
+from Utills import AccepterUtill
 
 
 class Accepter():
@@ -52,9 +15,37 @@ class Accepter():
         self.charset = charset
         self.trans = trans
 
-        self.current = start
+        self.current = None
         self.lambdacnt = AccepterUtill.lambda_cnt(trans)
-    
+    def transadd(
+        self, 
+        node1: str or Set, 
+        node2: str or Set,
+        edge: str
+    ):
+        if edge == "lambda":
+            self.lambdacnt += 1
+        if node1 is Set:
+            node1 = next(iter(node1))
+        if node2 is Set:
+            if node1 not in self.trans.keys():
+                self.trans[node1] = {edge: node2}
+            elif edge not in self.trans[node1].keys():
+                self.trans[node1][edge] = node2
+            else:
+                self.trans[node1][edge].union(node2)
+        else:
+            if node1 not in self.trans.keys():
+                self.trans[node1] = {edge: set([node2])}
+            elif edge not in self.trans[node1].keys():
+                self.trans[node1][edge] = set([node2])
+            else:
+                if node2 is Set:
+                    self.trans[node1][edge].union(node2)
+                else:
+                    self.trans[node1][edge].add(node2)
+
+
     def forward(self, x):
         next = set([])
         if x=="lambda":

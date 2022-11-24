@@ -1,21 +1,15 @@
 from Accepter import Accepter
 from queue import Queue
-
-def states_to_string(states):
-    if len(states)==0:
-        return "none"
-    ret = ""
-    for state in sorted(states):
-        ret += state
-    return ret
-def states_is_final(states,final):
-    for state in states:
-        if state in final:
-            return True
-    return False
+from Utills import states_is_final, states_to_string
 
 
+'''
+    Regular Languages (nfa <=> dfa) <=>
+    Regular Expression              <=>
+    Regular Grammar                 
+'''
 def nfa_to_dfa(nfa):
+
     dfa = Accepter(
             start = nfa.start,
             final = set(),
@@ -44,3 +38,82 @@ def nfa_to_dfa(nfa):
                     dfa.final.add(nextnode)
                 dfa.trans[nownode][char] = set([nextnode])
     return dfa
+
+
+class regex_to_nfa():
+    def __init__(self):
+        self.init = 0
+        self.inter = 0
+    
+    def Minit(self, x: str):
+        local_start = f"q{self.init*2}"
+        local_final = f"q{self.init*2 + 1}"
+        if x == "none":
+            trans = {}
+            charset = set()
+        elif x== "lambda":
+            trans = {local_start:{"lambda":set([local_final])}}
+            charset = set()
+
+        else:
+            trans = {local_start:{x:set([local_final])}}
+            charset = set([x])
+
+        ret = Accepter(
+            set([local_start]),
+            set([local_final]),
+            charset,
+            trans
+        )
+        self.init += 1
+        return ret
+
+    def add(self, M1, M2):
+        inter_start = f"inter{self.inter*2}"
+        inter_final = f"inter{self.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M1.charset.Union(M2.charset),
+            M1.trans.update(M2.trans)
+        )
+        ret.transadd(inter_start, M1.start.Union(M2.start), "lambda")
+        ret.transadd(M1.final, inter_final, "lambda")
+        ret.transadd(M2.final, inter_final, "lambda")
+        self.inter += 1
+        return ret
+
+    def mult(self, M1, M2):
+        inter_start = f"inter{self.inter*2}"
+        inter_final = f"inter{self.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M1.charset.Union(M2.charset),
+            M1.trans.update(M2.trans)
+        )
+        ret.transadd(inter_start, M1.start, "lambda")
+        ret.transadd(M2.final, inter_final, "lambda")
+
+        self.inter += 1
+        return ret
+
+    def aster(self, M):
+        inter_start = f"inter{self.inter*2}"
+        inter_final = f"inter{self.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M.charset,
+            M.trans
+        )
+  
+        ret.transadd(inter_start, inter_final, "lambda")
+        ret.transadd(inter_final, inter_start, "lambda")
+        ret.transadd(inter_start, M.start, "lambda")
+        ret.transadd(M.final, inter_final, "lambda")
+        self.inter += 1
+        return ret
+
+    def __call__(self, regex):
+        
