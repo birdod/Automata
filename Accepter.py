@@ -2,7 +2,7 @@ from typing import Dict, Set
 import networkx as nx
 import matplotlib.pyplot as plt
 
-
+#@TODO graph mutiedge collapse, self edge label missing
 class AccepterUtill():
     def lambda_cnt(trans):
         cnt = 0
@@ -16,12 +16,15 @@ class AccepterUtill():
         graph = nx.MultiDiGraph()
         for state in accepter.trans.keys():
             graph.add_node(state)
-        edge_labels = []
+        edge_labels = {}
         for keyf in accepter.trans.keys():
             for edge in accepter.trans[keyf].keys():
                 for keyt in accepter.trans[keyf][edge]:
-                    graph.add_edge(keyf,keyt, edge)
-                    edge_labels.append(((keyf, keyt), edge))
+                    graph.add_edge(keyf,keyt, label = edge)
+                    if (keyf, keyt) in edge_labels.keys():
+                        edge_labels[(keyf, keyt)] += f',{edge}'
+                    else:
+                        edge_labels[(keyf, keyt)] = edge
         color_map = []
         for node in graph:
             if node in accepter.final:
@@ -31,9 +34,10 @@ class AccepterUtill():
         ax = plt.plot()
         pos = nx.shell_layout(graph)
         nx.draw_shell(graph, node_color = color_map,with_labels = True)
-        nx.draw_networkx_edge_labels(graph, pos=pos,edge_labels=dict(edge_labels))
+        nx.draw_networkx_edge_labels(graph, pos=pos, edge_labels=edge_labels)
         plt.show()
         return
+
 
 class Accepter():
     def __init__(

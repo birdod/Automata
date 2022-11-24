@@ -14,4 +14,4 @@ if __name__ == "__main__":
     )
 
 
-    AccepterUtill.draw_graph(nfa_to_dfa(accepter))
+    AccepterUtill.draw_graph(nfa_to_dfa( accepter))
