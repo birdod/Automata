@@ -3,6 +3,7 @@ from Utills import AccepterUtill
 
 
 class Accepter():
+    inter = 0
     def __init__(
         self,
         start: Set[str],
@@ -17,6 +18,7 @@ class Accepter():
 
         self.current = None
         self.lambdacnt = AccepterUtill.lambda_cnt(trans)
+    
     def transadd(
         self, 
         node1: str or Set, 
@@ -84,5 +86,78 @@ class Accepter():
         
         return self.is_accepted()
 
+    
+    def __add__(self, M2):
+        M1 = self
+        inter_start = f"inter{Accepter.inter*2}"
+        inter_final = f"inter{Accepter.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M1.charset.union(M2.charset),
+            dict(M1.trans, **M2.trans)
+        )
+        ret.transadd(inter_start, M1.start.union(M2.start), "lambda")
+        if len(M1.final)>1:
+            for state in M1.final:
+                ret.transadd(state, inter_final, "lambda")
+        else:
+            ret.transadd(M1.final, inter_final, "lambda")
+        if len(M2.final)>1:
+            for state in M2.final:
+                ret.transadd(state, inter_final, "lambda")
+        else:
+            ret.transadd(M2.final, inter_final, "lambda")
+
+        Accepter.inter += 1
+        return ret
+
+    def __mul__(self, M2):
+        M1 = self
+        inter_start = f"inter{Accepter.inter*2}"
+        inter_final = f"inter{Accepter.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M1.charset.union(M2.charset),
+            dict(M1.trans, **M2.trans)
+        )
+        ret.transadd(inter_start, M1.start, "lambda")
+        if len(M1.final)>1:
+            for state in M1.final:
+                ret.transadd(state, M2.start, "lambda")
+        else:
+            ret.transadd(M1.final, M2.start, "lambda")
+        if len(M2.final)>1:
+            for state in M2.final:
+                ret.transadd(state, inter_final, "lambda")
+        else:
+            ret.transadd(M2.final, inter_final, "lambda")
+
+        Accepter.inter += 1
+        return ret
+
+    def aster(self):
+        M = self
+        inter_start = f"inter{Accepter.inter*2}"
+        inter_final = f"inter{Accepter.inter*2 +1}"
+        ret = Accepter(
+            set([inter_start]),
+            set([inter_final]),
+            M.charset,
+            M.trans
+        )
+
+        ret.transadd(inter_start, inter_final, "lambda")
+        ret.transadd(inter_final, inter_start, "lambda")
+        ret.transadd(inter_start, M.start, "lambda")
+        if len(M.final)>1:
+            for state in M.final:
+                ret.transadd(state, inter_final, "lambda")
+        else:
+            ret.transadd(M.final, inter_final, "lambda")
+
+        Accepter.inter += 1
+        return ret
     
 

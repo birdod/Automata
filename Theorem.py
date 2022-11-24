@@ -40,14 +40,14 @@ def nfa_to_dfa(nfa):
 
 
 class regex_to_nfa():
+    state = 0
     def __init__(self):
-        self.init = 0
         self.inter = 0
         self.reglist = None
     
     def Minit(self, x: str):
-        local_start = f"q{self.init*2}"
-        local_final = f"q{self.init*2 + 1}"
+        local_start = f"q{regex_to_nfa.state*2}"
+        local_final = f"q{regex_to_nfa.state*2 + 1}"
         if x == "none":
             trans = {}
             charset = set()
@@ -65,56 +65,9 @@ class regex_to_nfa():
             charset,
             trans
         )
-        self.init += 1
+        regex_to_nfa.state += 1
         return ret
 
-    def add(self, M1, M2):
-        inter_start = f"inter{self.inter*2}"
-        inter_final = f"inter{self.inter*2 +1}"
-        ret = Accepter(
-            set([inter_start]),
-            set([inter_final]),
-            M1.charset.union(M2.charset),
-            dict(M1.trans, **M2.trans)
-        )
-        ret.transadd(inter_start, M1.start.union(M2.start), "lambda")
-        ret.transadd(M1.final, inter_final, "lambda")
-        ret.transadd(M2.final, inter_final, "lambda")
-        self.inter += 1
-        return ret
-
-    def mult(self, M1, M2):
-        inter_start = f"inter{self.inter*2}"
-        inter_final = f"inter{self.inter*2 +1}"
-        ret = Accepter(
-            set([inter_start]),
-            set([inter_final]),
-            M1.charset.union(M2.charset),
-            dict(M1.trans, **M2.trans)
-        )
-        ret.transadd(inter_start, M1.start, "lambda")
-        ret.transadd(M1.final, M2.start, "lambda")
-        ret.transadd(M2.final, inter_final, "lambda")
-
-        self.inter += 1
-        return ret
-
-    def aster(self, M):
-        inter_start = f"inter{self.inter*2}"
-        inter_final = f"inter{self.inter*2 +1}"
-        ret = Accepter(
-            set([inter_start]),
-            set([inter_final]),
-            M.charset,
-            M.trans
-        )
-
-        ret.transadd(inter_start, inter_final, "lambda")
-        ret.transadd(inter_final, inter_start, "lambda")
-        ret.transadd(inter_start, M.start, "lambda")
-        ret.transadd(M.final, inter_final, "lambda")
-        self.inter += 1
-        return ret
 
     def preproc(self,regex):
         ret = []
@@ -161,12 +114,12 @@ class regex_to_nfa():
                     Mlist.append(self.eval(cur+1, cur+2))
                     cur = cur+2
                 if (cur<end) and self.reglist[cur]=='^':
-                    Mlist.append(self.aster(Mlist.pop(-1)))
+                    Mlist.append(Mlist.pop(-1).aster())
                     cur += 1
                 second = Mlist.pop(-1)
-                Mlist.append(self.mult(Mlist.pop(-1),second))
+                Mlist.append(Mlist.pop(-1) * second)
             elif self.reglist[cur] == '^':
-                Mlist.append(self.aster(Mlist.pop(-1)))
+                Mlist.append(Mlist.pop(-1).aster())
                 cur += 1
             else:
                 Mlist.append(self.Minit(self.reglist[cur]))
@@ -174,7 +127,7 @@ class regex_to_nfa():
         if Mlist:
             ret = Mlist.pop(0)
             for M in Mlist:
-                ret = self.add(ret, M)
+                ret = ret + M
             return ret
 
                 

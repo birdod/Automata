@@ -4,6 +4,7 @@ from Theorem import *
     
 if __name__ == "__main__":
     transfer = regex_to_nfa()
-    accepter = transfer("a*b^")
-    for temp in accepter.trans:
-        print(temp, accepter.trans[temp])
+    acc1 = transfer("a")
+    acc2 = transfer("b")
+    print((acc1 + acc2)("a"))
+    
