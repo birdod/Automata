@@ -1,4 +1,4 @@
-from typing import List, Dict, Set
+from typing import Dict, Set
 import networkx as nx
 import matplotlib.pyplot as plt
 
@@ -16,11 +16,12 @@ class AccepterUtill():
         graph = nx.MultiDiGraph()
         for state in accepter.trans.keys():
             graph.add_node(state)
-        
+        edge_labels = []
         for keyf in accepter.trans.keys():
             for edge in accepter.trans[keyf].keys():
                 for keyt in accepter.trans[keyf][edge]:
                     graph.add_edge(keyf,keyt, edge)
+                    edge_labels.append(((keyf, keyt), edge))
         color_map = []
         for node in graph:
             if node in accepter.final:
@@ -28,21 +29,26 @@ class AccepterUtill():
             else: 
                 color_map.append('blue')     
         ax = plt.plot()
-        nx.draw(graph, node_color = color_map,with_labels = True)
+        pos = nx.shell_layout(graph)
+        nx.draw_shell(graph, node_color = color_map,with_labels = True)
+        nx.draw_networkx_edge_labels(graph, pos=pos,edge_labels=dict(edge_labels))
         plt.show()
         return
 
 class Accepter():
     def __init__(
         self,
-        start: str,
+        start: Set[str],
         final: Set[str],
-        trans: Dict[str, Dict[str, Set[str]]]
+        charset: Set[str],
+        trans: Dict[str, Dict[str, Set[str]]],
     ):
-        self.start = set([start])
-        self.current = set([start])
+        self.start = start
         self.final = final
+        self.charset = charset
         self.trans = trans
+
+        self.current = start
         self.lambdacnt = AccepterUtill.lambda_cnt(trans)
     
     def forward(self, x):
@@ -63,7 +69,17 @@ class Accepter():
             if state in self.final:
                 return True
         return False
-    
+
+    def delta(self, start, string):
+        self.current = start
+        for char in string:
+            for _ in range(self.lambdacnt):
+                self.forward("lambda")
+            self.forward(char)
+        for _ in range(self.lambdacnt):
+            self.forward("lambda")
+        return self.current
+
     def __call__(self, string):
         self.current = self.start
         for char in string:
@@ -78,19 +94,3 @@ class Accepter():
 
     
 
-    
-if __name__ == "__main__":
-    accepter = Accepter("q0", 
-        set(["q2","q3"]), 
-        {   "q0":{"lambda":set(["q2"]), "b":set(["q1"])}, 
-            "q2":{"a":set(["q2"])},
-            "q1":{"a":set(["q3"]), "b":set(["q1"])},
-        })
-    # print(accepter("aaaaaa"))
-    # print(accepter(""))
-    # print(accepter("bbba"))
-    
-    # print(accepter("bbb"))
-    # print(accepter("bab"))
-
-    AccepterUtill.draw_graph(accepter)
