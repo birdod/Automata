@@ -44,6 +44,7 @@ class regex_to_nfa():
     def __init__(self):
         self.init = 0
         self.inter = 0
+        self.reglist = None
     
     def Minit(self, x: str):
         local_start = f"q{self.init*2}"
@@ -115,5 +116,64 @@ class regex_to_nfa():
         self.inter += 1
         return ret
 
+    def preproc(regex):
+        ret = []
+        now = 0
+        while (now < len(regex)):
+            if regex[now] in ['(', ')', '+','*','^']:
+                ret.append(regex[now])
+                now += 1
+            elif regex[now] == ' ':
+                now += 1
+            else:
+                start = now
+                while((now < len(regex)) and (regex[now] not in ['(', ')', '+','*','^', ' '])):
+                    now += 1
+                ret.append(regex[start:now])
+        return ret
+
+    def braket(self, cur):
+        bcnt = 0
+        while (bcnt >= 0):
+            cur += 1
+            if self.reglist[cur] == '(':
+                bcnt += 1
+            if self.reglist[cur] == ')':
+                bcnt -= 1
+        return cur
+
+    def eval(self, cur, end):
+        Mlist = []
+        while(cur < end):
+            if self.reglist[cur] == '(':
+                Mlist.append(self.eval(cur + 1, self.braket(cur)))
+                cur = self.braket(cur) + 1
+            
+            elif self.reglist[cur] == '+':
+                cur += 1
+                continue
+        
+            elif self.reglist[cur] == '*':
+                if self.reglist[cur+1] == '(':
+                    Mlist.append(self.eval(cur+2, self.braket(cur+1)))
+                    cur = self.braket(cur+1) + 1
+                else:
+                    Mlist.append(self.eval(cur+1, cur+2))
+                    cur = cur+3
+                if (cur<end) and self.reglist[cur]=='^':
+                    Mlist.append(self.aster(Mlist.pop(-1)))
+                    cur += 1
+                second = Mlist.pop(-1)
+                Mlist.append(self.mult(Mlist.pop(-1),second))
+        if Mlist:
+            ret = Mlist.pop(0)
+            for M in Mlist:
+                ret = self.add(ret, M)
+            return ret
+
+                
     def __call__(self, regex):
+        self.reglist = self.preproc(regex)
+        return eval(0, len(self.reglist))
+    
         
