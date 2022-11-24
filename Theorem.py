@@ -5,8 +5,7 @@ from Utills import states_is_final, states_to_string
 
 '''
     Regular Languages (nfa <=> dfa) <=>
-    Regular Expression              <=>
-    Regular Grammar                 
+    Regular Expression              
 '''
 def nfa_to_dfa(nfa):
 
@@ -160,7 +159,7 @@ class regex_to_nfa():
                     cur = self.braket(cur+1) + 1
                 else:
                     Mlist.append(self.eval(cur+1, cur+2))
-                    cur = cur+3
+                    cur = cur+2
                 if (cur<end) and self.reglist[cur]=='^':
                     Mlist.append(self.aster(Mlist.pop(-1)))
                     cur += 1
