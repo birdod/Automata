@@ -46,6 +46,10 @@ class TheoremTest(TestCase):
         self.assertEqual(accpeter_3anb("aaa"), True)
         self.assertEqual(accpeter_3anb("aa"), False)
         self.assertEqual(accpeter_3anb("aaba"), False)
-
+        accpeter_case = regex_to_nfa()("(a+c)^*b+d^")
+        self.assertEqual(accpeter_case("accacb"), True)
+        self.assertEqual(accpeter_case("dddd"), True)
+        self.assertEqual(accpeter_case("aa"), False)
+        self.assertEqual(accpeter_case("aaba"), False)
 if __name__ == "__main__":
     main()
