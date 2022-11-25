@@ -1,6 +1,7 @@
 from typing import Dict, Set
 from Utills import AccepterUtill
-import Theorem
+from queue import Queue
+from Utills import states_is_final, states_to_string
 
 class Accepter():
     inter = 0
@@ -18,7 +19,7 @@ class Accepter():
         self.charset = charset
         self.trans = trans
 
-        self.current = None
+        self.current = start
         self.lambdacnt = AccepterUtill.lambda_cnt(trans)
     
     def transadd(
@@ -142,6 +143,11 @@ class Accepter():
         Accepter.inter += 1
         return ret
 
+    def __eq__(self, M2):
+        M1 = self
+        temp = (M1.intersection(M2.complement())) + (M1.complement().intersection(M2))
+        return temp.is_empty()
+        
     def aster(self):
         M = self
         inter_start = f"inter{Accepter.inter*2}"
@@ -175,9 +181,73 @@ class Accepter():
             self.trans
         )
         if ret.is_nfa():
-            ret = Theorem.nfa_to_dfa(ret)
+            ret = nfa_to_dfa(ret)
         ret.final = ret.states.difference(ret.final)
         return ret
+    
+    
+    #@TODO
+    def intersection(self, M2):
+        M1 = self
+        if M1.is_nfa():
+            M1 = nfa_to_dfa(M1)
+        if M2.is_nfa():
+            M2 = nfa_to_dfa(M2)
+        ret = Accepter(
+            set(),
+            set(),
+            set(),
+            M1.charset,
+            {}
+        )
+        for m1temp in M1.start:
+            for m2temp in M2.start:
+                ret.start.add(m1temp + m2temp)
+
+        for m1final in M1.final:
+            for m2final in M2.final:
+                ret.final.add(m1final+m2final)
+            
+        for m1state in M1.states:
+            for m2state in M2.states:
+                ret.states.add(m1state + m2state)
+        
+        for m1start in M1.trans.keys():
+            for m2start in M2.trans.keys():
+                for edge in M1.trans[m1start].keys():
+                    if edge not in M2.trans[m2start].keys():
+                        continue
+                    node2 = set()
+                    for m1end in M1.trans[m1start][edge]:
+                        for m2end in M2.trans[m2start][edge]:
+                            node2.add(m1end + m2end)
+                    ret.transadd(m1start+m2start, node2, edge)
+        return ret
+    
+    
+    def is_empty(self):
+        visited = set()
+
+
+        Q = Queue()
+        for start in self.start:
+            Q.put(start)
+            visited.add(start)
+        while(not Q.empty()):
+            now = Q.get()
+            if now in self.final:
+                return False
+            if now not in self.trans.keys():
+                continue
+            for nkey in self.trans[now].keys():
+
+                for next in self.trans[now][nkey]:
+                    if next in visited:
+                        continue
+                    visited.add(next)
+                    Q.put(next)
+        return True
+
 
     def is_nfa(self):
         flag = False
@@ -187,4 +257,34 @@ class Accepter():
                     flag = True
         
         return (flag or self.lambdacnt>0)
+
+    
+
+def nfa_to_dfa(nfa):
+
+    dfa = Accepter(
+            states = set(),
+            start = nfa.start,
+            final = set(),
+            charset = nfa.charset,
+            trans = {}
+        )
+    Q = Queue()
+
+    if states_is_final(dfa.start, nfa.final):
+        dfa.final.add(states_to_string(dfa.start))
+    Q.put(dfa.start)
+
+    while(not Q.empty()):
+        nowstates = Q.get()
+        nownode = states_to_string(nowstates)
+        for char in nfa.charset:
+            nextstates = nfa.delta(nowstates, char)
+            nextnode = states_to_string(nextstates)
+            if nextnode not in dfa.trans.keys():
+                Q.put(nextstates)
+                if states_is_final(nextstates, nfa.final):
+                    dfa.final.add(nextnode)
+            dfa.transadd(nownode, nextnode,char)
+    return dfa
 

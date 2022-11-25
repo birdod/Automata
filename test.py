@@ -25,19 +25,41 @@ class AccepterTest(TestCase):
     # this test rely on
     # [test_nfa, test_nfatodfa, test_regextonfa]
     def test_complement(self):
-        accepter_an2bcn = regex_to_nfa()("a^*b*b*c^")
-        self.assertEqual(accepter_an2bcn("aaaabb"),True)
-        self.assertEqual(accepter_an2bcn("aabbccc"),True)
-        self.assertEqual(accepter_an2bcn("aaaab"),False)
-        self.assertEqual(accepter_an2bcn("aaaccabb"),False)
-        an2bcn_comp = accepter_an2bcn.complement()
-        self.assertEqual(an2bcn_comp("aaaabb"), False)
-        self.assertEqual(an2bcn_comp("aabbccc"), False)
-        self.assertEqual(an2bcn_comp("aaaab"), True)
-        self.assertEqual(an2bcn_comp("aaaccabb"), True)
-        
+        accepter_anb2cn = regex_to_nfa()("a^*b*b*c^")
+        self.assertEqual(accepter_anb2cn("aaaabb"),True)
+        self.assertEqual(accepter_anb2cn("aabbccc"),True)
+        self.assertEqual(accepter_anb2cn("aaaab"),False)
+        self.assertEqual(accepter_anb2cn("aaaccabb"),False)
+        anb2cn_comp = accepter_anb2cn.complement()
+        self.assertEqual(anb2cn_comp("aaaabb"), False)
+        self.assertEqual(anb2cn_comp("aabbccc"), False)
+        self.assertEqual(anb2cn_comp("aaaab"), True)
+        self.assertEqual(anb2cn_comp("aaaccabb"), True)
         return
 
+    def testintersection(self):
+        accepter_anb2cn = regex_to_nfa()("a^*b*b*c^")
+        accepter_a2b2cn = regex_to_nfa()("a*a*b*b*c^")
+        intersect = accepter_a2b2cn.intersection(accepter_anb2cn)
+        self.assertEqual(intersect("aabbccc"),True)
+        self.assertEqual(intersect("aabb"),True)
+        self.assertEqual(intersect("aaaaabbccc"),False)
+        self.assertEqual(intersect("aaaaabbbccc"),False)
+
+    def testisempty(self):
+        test1 = regex_to_nfa()("a*a")
+        self.assertEqual(test1.is_empty(), False)
+
+    def testeq(self):
+        test1 = regex_to_nfa()("(a+b)*(a+b)")
+        test2 = regex_to_nfa()("a*a+a*b+b*a+b*b")
+        diff = regex_to_nfa()("a*b")
+
+
+        self.assertEqual(test1==test2, True)
+
+        self.assertEqual(test1==diff, False)
+        self.assertEqual(diff==test2, False)
 
 class TheoremTest(TestCase):
     # this test rely on 

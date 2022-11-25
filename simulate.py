@@ -1,10 +1,10 @@
-from Accepter import *
 from Theorem import *
+from Utills import *
 
     
 if __name__ == "__main__":
-    transfer = regex_to_nfa()
-    acc1 = transfer("a")
-    acc2 = transfer("b")
-    print((acc1 + acc2)("a"))
-    
+
+    diff = regex_to_nfa()("a*b")
+    diff2 = regex_to_nfa()("c*c")
+
+    print(diff.intersection(diff2.complement()).is_empty())

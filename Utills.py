@@ -32,8 +32,8 @@ class AccepterUtill():
             else: 
                 color_map.append('blue')     
         ax = plt.plot()
-        pos = nx.shell_layout(graph)
-        nx.draw_shell(graph, node_color = color_map,with_labels = True)
+        pos = nx.spring_layout(graph)
+        nx.draw_spring(graph, node_color = color_map,with_labels = True)
         nx.draw_networkx_edge_labels(graph, pos=pos, edge_labels=edge_labels)
         plt.show()
         return
