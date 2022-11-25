@@ -1,16 +1,18 @@
 from typing import Dict, Set
 from Utills import AccepterUtill
-
+import Theorem
 
 class Accepter():
     inter = 0
     def __init__(
         self,
+        states: Set[str],
         start: Set[str],
         final: Set[str],
         charset: Set[str],
         trans: Dict[str, Dict[str, Set[str]]],
     ):
+        self.states = states
         self.start = start
         self.final = final
         self.charset = charset
@@ -29,7 +31,9 @@ class Accepter():
             self.lambdacnt += 1
         if isinstance(node1, set):
             node1 = next(iter(node1))
+        self.states.add(node1)
         if isinstance(node2, set):
+            self.states = self.states.union(node2)
             if node1 not in self.trans.keys():
                 self.trans[node1] = {edge: node2}
             elif edge not in self.trans[node1].keys():
@@ -37,13 +41,13 @@ class Accepter():
             else:
                 self.trans[node1][edge] = self.trans[node1][edge].union(node2)
         else:
+            self.states.add(node2)
             if node1 not in self.trans.keys():
                 self.trans[node1] = {edge: set([node2])}
             elif edge not in self.trans[node1].keys():
                 self.trans[node1][edge] = set([node2])
             else:
                 self.trans[node1][edge].add(node2)
-
 
     def forward(self, x):
         next = set([])
@@ -86,12 +90,12 @@ class Accepter():
         
         return self.is_accepted()
 
-    
     def __add__(self, M2):
         M1 = self
         inter_start = f"inter{Accepter.inter*2}"
         inter_final = f"inter{Accepter.inter*2 +1}"
         ret = Accepter(
+            self.states.union(M2.states),
             set([inter_start]),
             set([inter_final]),
             M1.charset.union(M2.charset),
@@ -117,6 +121,7 @@ class Accepter():
         inter_start = f"inter{Accepter.inter*2}"
         inter_final = f"inter{Accepter.inter*2 +1}"
         ret = Accepter(
+            self.states.union(M2.states),
             set([inter_start]),
             set([inter_final]),
             M1.charset.union(M2.charset),
@@ -142,6 +147,7 @@ class Accepter():
         inter_start = f"inter{Accepter.inter*2}"
         inter_final = f"inter{Accepter.inter*2 +1}"
         ret = Accepter(
+            self.states,
             set([inter_start]),
             set([inter_final]),
             M.charset,
@@ -160,4 +166,25 @@ class Accepter():
         Accepter.inter += 1
         return ret
     
+    def complement(self):
+        ret = Accepter(
+            self.states,
+            self.start,
+            self.final,
+            self.charset,
+            self.trans
+        )
+        if ret.is_nfa():
+            ret = Theorem.nfa_to_dfa(ret)
+        ret.final = ret.states.difference(ret.final)
+        return ret
+
+    def is_nfa(self):
+        flag = False
+        for start in self.trans.keys():
+            for edge in self.trans[start].keys():
+                if len(self.trans[start][edge]) > 1:
+                    flag = True
+        
+        return (flag or self.lambdacnt>0)
 

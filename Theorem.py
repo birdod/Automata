@@ -10,14 +10,14 @@ from Utills import states_is_final, states_to_string
 def nfa_to_dfa(nfa):
 
     dfa = Accepter(
+            states = set(),
             start = nfa.start,
             final = set(),
-            trans = {},
-            charset = nfa.charset
+            charset = nfa.charset,
+            trans = {}
         )
     Q = Queue()
 
-    dfa.trans[states_to_string(dfa.start)] = {}
     if states_is_final(dfa.start, nfa.final):
         dfa.final.add(states_to_string(dfa.start))
     Q.put(dfa.start)
@@ -28,14 +28,11 @@ def nfa_to_dfa(nfa):
         for char in nfa.charset:
             nextstates = nfa.delta(nowstates, char)
             nextnode = states_to_string(nextstates)
-            if nextnode in dfa.trans.keys():
-                dfa.trans[nownode][char] = set([nextnode])
-            else:
-                dfa.trans[nextnode] = {}
+            if nextnode not in dfa.trans.keys():
                 Q.put(nextstates)
                 if states_is_final(nextstates, nfa.final):
                     dfa.final.add(nextnode)
-                dfa.trans[nownode][char] = set([nextnode])
+            dfa.transadd(nownode, nextnode,char)
     return dfa
 
 
@@ -60,6 +57,7 @@ class regex_to_nfa():
             charset = set([x])
 
         ret = Accepter(
+            set([local_start,local_final]),
             set([local_start]),
             set([local_final]),
             charset,
